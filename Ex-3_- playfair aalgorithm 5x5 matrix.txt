@@ -1,0 +1,87 @@
+#include <stdio.h>
+#include <string.h>
+#include <ctype.h>
+#define SIZE 5
+void generateKeyMatrix(char key[], char keyMatrix[SIZE][SIZE]) 
+{
+    int map[26] = {0};
+    int x = 0, y = 0;
+    for (int i = 0; i < strlen(key); i++) {
+        char current = toupper(key[i]);
+        if (current == 'J') current = 'I';
+        if (map[current - 'A'] == 0 && isalpha(current)) {
+            keyMatrix[x][y] = current;
+            map[current - 'A'] = 1;
+            y++;
+            if (y == SIZE) {
+                y = 0;
+                x++;
+            }
+        }
+    }
+    for (char ch = 'A'; ch <= 'Z'; ch++) {
+        if (ch == 'J') continue;
+        if (map[ch - 'A'] == 0) {
+            keyMatrix[x][y] = ch;
+            map[ch - 'A'] = 1;
+            y++;
+            if (y == SIZE) {
+                y = 0;
+                x++;
+            }
+        }
+    }
+}
+void findPosition(char keyMatrix[SIZE][SIZE], char letter, int *row, int *col) {
+    for (int i = 0; i < SIZE; i++) {
+        for (int j = 0; j < SIZE; j++) {
+            if (keyMatrix[i][j] == letter) {
+                *row = i;
+                *col = j;
+                return;
+            }
+        }
+    }
+}
+void encrypt(char plaintext[], char keyMatrix[SIZE][SIZE], char ciphertext[]) {
+    int len = strlen(plaintext);
+    int idx = 0;
+
+    for (int i = 0; i < len; i += 2) {
+        char a = toupper(plaintext[i]);
+        char b = (i + 1 < len) ? toupper(plaintext[i + 1]) : 'X';
+
+        if (a == b) {
+            b = 'X';
+        }
+
+        int row1, col1, row2, col2;
+        findPosition(keyMatrix, a, &row1, &col1);
+        findPosition(keyMatrix, b, &row2, &col2);
+        if (row1 == row2) {
+            ciphertext[idx++] = keyMatrix[row1][(col1 + 1) % SIZE];
+            ciphertext[idx++] = keyMatrix[row2][(col2 + 1) % SIZE];
+        }
+        else if (col1 == col2) {
+            ciphertext[idx++] = keyMatrix[(row1 + 1) % SIZE][col1];
+            ciphertext[idx++] = keyMatrix[(row2 + 1) % SIZE][col2];
+        }
+        else {
+            ciphertext[idx++] = keyMatrix[row1][col2];
+            ciphertext[idx++] = keyMatrix[row2][col1];
+        }
+    }
+    ciphertext[idx] = '\0';
+}
+int main() 
+{
+    char key[30], plaintext[100], keyMatrix[SIZE][SIZE], ciphertext[100];
+    printf("Enter keyword: ");
+    scanf("%s", key);
+    printf("Enter plaintext: ");
+    scanf("%s", plaintext);
+    generateKeyMatrix(key, keyMatrix);
+    encrypt(plaintext, keyMatrix, ciphertext);
+    printf("Encrypted text: %s\n", ciphertext);
+    return 0;
+}
